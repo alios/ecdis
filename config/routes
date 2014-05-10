@@ -1,0 +1,11 @@
+/static StaticR Static getStatic
+/auth   AuthR   Auth   getAuth
+
+/favicon.ico FaviconR GET
+/robots.txt RobotsR GET
+
+/ HomeR GET POST
+
+/preslib/COLS PresLibColsListR GET
+/preslib/COLS/#String PresLibColsR GET
+/preslib/COLS/#String/style.css PresLibColsCssR GET
