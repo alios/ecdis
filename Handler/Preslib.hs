@@ -16,17 +16,17 @@ getPresLibColsR c = do
     Just cols -> 
         let cols_ks = Map.keys es
             es = cols_entries cols
-        in defaultLayout $ do
+        in defaultLayout $ do                      
                       addStylesheet $ PresLibColsCssR c
                       setTitle $ toHtml $ concat ["Colour Schema ", c]
                       [whamlet|     
                                 <h1>Colour Schema #{c}
-                                <table style="border: 1px solid black;">
+                                <table style="border-width:2px; border-style: solid;">
                                   $forall colour <- cols_ks
                                     <tr>
-                                       <td .#{colour}>#{colour}
+                                       <td>#{colour}
                                        <td .#{colour}_bg style="width: 80px">&nbsp;
-                                       <td>#{snd $ fromJust $ Map.lookup colour es}
+                                       <td .#{colour}>#{snd $ fromJust $ Map.lookup colour es}
                        |]
       
 

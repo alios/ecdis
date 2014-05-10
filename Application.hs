@@ -18,8 +18,8 @@ import qualified Network.Wai.Middleware.RequestLogger as RequestLogger
 import qualified Database.Persist
 import Database.Persist.Sql (runMigration)
 import Network.HTTP.Conduit (newManager, conduitManagerSettings)
-import Control.Monad.Logger (runLoggingT)
-import System.Log.FastLogger (newLoggerSet, defaultBufSize)
+import Control.Monad.Logger 
+import System.Log.FastLogger (newStdoutLoggerSet, defaultBufSize)
 import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
@@ -59,14 +59,18 @@ makeApplication conf = do
     app <- toWaiAppPlain foundation
     return $ logWare app
 
+loadPreslib :: FilePath -> IO Library
 loadPreslib fn = do
+  runStdoutLoggingT ($(logInfo) "loading presentation library")
   lib_res <- readLibFile fn
   case lib_res of
     Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
-    Partial f -> fail "partial Parse fail"
-    Done _ res -> return res
+    Partial _ -> fail "partial Parse fail"
+    Done _ res -> 
+        do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
+           return res
     where readLibFile :: FilePath -> IO (Result Library)
-          readLibFile fp = fmap (parse parseLibrary) $ T.readFile fp
+          readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
 
 
 -- | Loads up any necessary settings, creates your foundation datatype, and
@@ -80,11 +84,11 @@ makeFoundation conf = do
               Database.Persist.applyEnv
     p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConf)
     
-    loggerSet' <- newLoggerSet defaultBufSize Nothing
+    loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher
 
     plib <- loadPreslib "config/PresLib_e4.0.0.dai"
-
+    
     let logger = Yesod.Core.Types.Logger loggerSet' getter
         foundation = App conf s p manager dbconf logger plib
 
