@@ -1,3 +1,5 @@
+{-# LANGAUGE TemplateHaskell, OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Foundation where
 
 import Prelude
@@ -74,6 +76,10 @@ instance Yesod App where
             $(combineStylesheets 'StaticR
                 [ css_normalize_css
                 , css_bootstrap_css
+                ])
+            $(combineScripts 'StaticR
+                [ js_jquery_2_1_1_min_js
+                , js_jquery_ui_1_10_4_min_js
                 ])
             $(widgetFile "default-layout")
         giveUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
