@@ -1,4 +1,5 @@
-{-# LANGAUGE TemplateHaskell, OverloadedStrings #-}
+{-# LANGAUGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Foundation where
 

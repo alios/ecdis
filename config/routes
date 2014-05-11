@@ -6,6 +6,7 @@
 
 / HomeR GET POST
 
-/preslib/COLS PresLibColsListR GET
-/preslib/COLS/#String PresLibColsR GET
+/preslib/LBID			PresLibIdHtmlR GET
+/preslib/COLS			PresLibColsListHtmlR GET
+/preslib/COLS/#String 		PresLibColsHtmlR GET
 /preslib/COLS/#String/style.css PresLibColsCssR GET
