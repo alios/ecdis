@@ -8,11 +8,13 @@ $newline never
     <head>
         <meta charset="UTF-8">
 
-        <title>#{pageTitle pc}
+        <title>ECDIS - #{pageTitle pc}
         <meta name="description" content="">
         <meta name="author" content="">
 
         <meta name="viewport" content="width=device-width,initial-scale=1">
+        <script>
+          document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');
 
         ^{pageHead pc}
 
@@ -20,8 +22,6 @@ $newline never
         \<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
         \<![endif]-->
 
-        <script>
-          document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');
     <body>
         <div class="container">
             <header>

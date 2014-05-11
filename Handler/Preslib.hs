@@ -1,15 +1,20 @@
-{-# LANGUAGE TupleSections, OverloadedStrings, TypeSynonymInstances, FlexibleInstances, Rank2Types #-}
-module Handler.Preslib where
+{-# LANGUAGE QuasiQuotes, TupleSections, OverloadedStrings, TypeSynonymInstances, FlexibleInstances, Rank2Types, NoMonomorphismRestriction, KindSignatures, TypeFamilies #-}
+
+module Handler.Preslib ( getPresLibIdHtmlR
+                       , getPresLibColsHtmlR
+                       , getPresLibColsListHtmlR
+                       , getPresLibColsCssR
+                       )where
 import qualified Data.Text as Text
 import Import
 import Data.DAI.Types
 import Data.DAI.CSS
 import Data.List (find)
 import Data.Maybe (fromJust)
+import Data.Time.Format
+import System.Locale
 import qualified Data.Map as Map
 
-showText :: forall a. Show a => a -> Text
-showText = Text.pack . show
 
 getPresLibIdHtmlR :: Handler Html
 getPresLibIdHtmlR = do
@@ -20,14 +25,15 @@ getPresLibIdHtmlR = do
           , (i18n MsgPreslibPTYP, lbid_ptyp lid)
           , (i18n MsgPreslibESID, showText $ lbid_esid lid) 
           , (i18n MsgPreslibEDTN, showText $ lbid_edtn lid) 
-          , (i18n MsgPreslibCODT, showText $ lbid_codt lid) 
-          , (i18n MsgPreslibCOTI, showText $ lbid_coti lid) 
+          , (i18n MsgPreslibCO, showText $ lbid_compileTime lid) 
           , (i18n MsgPreslibVRDT, showText $ lbid_vrdt lid) 
           , (i18n MsgPreslibPROF, lbid_prof lid) 
           , (i18n MsgPreslibOCDT, showText $ lbid_ocdt lid) 
           , (i18n MsgPreslibCOMT, lbid_comt lid) 
           ]
+  setModifiedCompileTime
   defaultLayout $ do
+    setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
      <h1>_{MsgPreslibId}
      <table style="border-width:2px; border-style: solid;">
@@ -43,7 +49,9 @@ getPresLibColsHtmlR c = do
     Just cols -> 
         let cols_ks = Map.keys es
             es = cols_entries cols
-        in defaultLayout $ do                      
+        in do
+          setModifiedCompileTime
+          defaultLayout $ do                      
                       addStylesheet $ PresLibColsCssR c
                       i18n <- getMessageRender
                       setTitle $ toHtml $ concat [Text.unpack $ i18n MsgColorDefinition, c]
@@ -62,6 +70,7 @@ getPresLibColsListHtmlR :: Handler Html
 getPresLibColsListHtmlR = do
   cols <- fmap (lib_cols . preslib) getYesod
   let ks = map cols_ctus cols
+  setModifiedCompileTime
   defaultLayout $ do
     setTitle "COLS"
     [whamlet| <h1>_{MsgColorDefinition}</h1>
@@ -75,7 +84,9 @@ getPresLibColsCssR c = do
   plib <- fmap preslib getYesod
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
-    Just cols -> respond "text/css" $ cssColourMap . cols_entries $ cols
+    Just cols -> do
+      setModifiedCompileTime
+      respond "text/css" $ cssColourMap . cols_entries $ cols
 
 --
 -- Helpers
@@ -86,4 +97,16 @@ findCOLS lib tn =
     let cols = lib_cols lib
     in find (\c -> cols_ctus c == tn) cols
                     
+showText :: forall a. Show a => a -> Text
+showText = Text.pack . show
+
+setModifiedCompileTime :: forall (m :: * -> *).
+                                (MonadHandler m, HandlerSite m ~ App) =>
+                                m ()
+setModifiedCompileTime = do
+  ct <- fmap (lbid_compileTime . lib_id . preslib) getYesod  
+  addHeader "Last-Modified" $ httpDate ct
+
+httpDate :: FormatTime t => t -> Text
+httpDate = Text.pack . formatTime defaultTimeLocale "%a, %e %b %Y %T GMT"
 

@@ -1,4 +1,7 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Application
     ( makeApplication
     , getApplicationDev
@@ -23,7 +26,7 @@ import System.Log.FastLogger (newStdoutLoggerSet, defaultBufSize)
 import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
-
+import qualified Network.Wai.Middleware.Gzip as Gzip
 import qualified Data.Text.IO as T
 import Data.Attoparsec.Text
 import Data.DAI.Types
@@ -55,9 +58,13 @@ makeApplication conf = do
         , destination = RequestLogger.Logger $ loggerSet $ appLogger foundation
         }
 
+    -- gzip middleware
+    let gzip = Gzip.gzip Gzip.def
+
     -- Create the WAI application and apply middlewares
     app <- toWaiAppPlain foundation
-    return $ logWare app
+
+    return $ logWare $ gzip app
 
 loadPreslib :: FilePath -> IO Library
 loadPreslib fn = do

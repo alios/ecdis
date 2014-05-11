@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell, TupleSections, OverloadedStrings #-}
 module Handler.Home where
 
 import Import
