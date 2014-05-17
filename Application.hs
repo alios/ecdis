@@ -27,14 +27,11 @@ import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 import qualified Network.Wai.Middleware.Gzip as Gzip
-import qualified Data.Text.IO as T
-import Data.Attoparsec.Text
-import Data.DAI.Types
+import Data.IHO.Preslib
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
 import Handler.Home
-import Handler.Preslib
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -66,20 +63,6 @@ makeApplication conf = do
 
     return $ logWare $ gzip app
 
-loadPreslib :: FilePath -> IO Library
-loadPreslib fn = do
-  runStdoutLoggingT ($(logInfo) "loading presentation library")
-  lib_res <- readLibFile fn
-  case lib_res of
-    Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
-    Partial _ -> fail "partial Parse fail"
-    Done _ res -> 
-        do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
-           return res
-    where readLibFile :: FilePath -> IO (Result Library)
-          readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
-
-
 -- | Loads up any necessary settings, creates your foundation datatype, and
 -- performs some initialization.
 makeFoundation :: AppConfig DefaultEnv Extra -> IO App
@@ -93,11 +76,11 @@ makeFoundation conf = do
     
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher
-
-    plib <- loadPreslib "config/PresLib_e4.0.0.dai"
+                  
+    plib_sub <- mkPreslibSub "config/PresLib_e4.0.0.dai"
     
     let logger = Yesod.Core.Types.Logger loggerSet' getter
-        foundation = App conf s p manager dbconf logger plib
+        foundation = App conf s p manager dbconf logger plib_sub
 
     -- Perform database migration using our application's logging settings.
     runLoggingT

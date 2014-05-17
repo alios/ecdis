@@ -20,7 +20,8 @@ library
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home
-                     Handler.Preslib
+                     Data.IHO.Preslib
+                     Data.IHO.Preslib.Data
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

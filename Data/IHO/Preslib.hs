@@ -1,12 +1,25 @@
-{-# LANGUAGE QuasiQuotes, TupleSections, OverloadedStrings, TypeSynonymInstances, FlexibleInstances, Rank2Types, NoMonomorphismRestriction, KindSignatures, TypeFamilies #-}
+{-# LANGUAGE QuasiQuotes     #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE KindSignatures     #-}
+{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module Handler.Preslib ( getPresLibIdHtmlR
-                       , getPresLibColsHtmlR
-                       , getPresLibColsListHtmlR
-                       , getPresLibColsCssR
-                       )where
+module Data.IHO.Preslib 
+    ( module Data.IHO.Preslib.Data
+    , mkPreslibSub
+    ) where
+
+import Prelude
+
+import Data.IHO.Preslib.Data
+import Yesod
+
 import qualified Data.Text as Text
-import Import
 import Data.DAI.Types
 import Data.DAI.CSS
 import Data.List (find)
@@ -14,11 +27,57 @@ import Data.Maybe (fromJust)
 import Data.Time.Format
 import System.Locale
 import qualified Data.Map as Map
+import qualified Data.Text.IO as T
+import Data.Attoparsec.Text
+import Data.DAI.Types
+import Data.Text (Text)
+
+--    plib <- loadPreslib "config/PresLib_e4.0.0.dai"
+
+mkPreslibSub :: FilePath -> IO PreslibSub
+mkPreslibSub fp = do
+  lib <- loadPreslib fp
+  return $ PreslibSub
+         { preslib_lib = lib
+         }
+
+loadPreslib :: FilePath -> IO Library
+loadPreslib fn = do
+--  runStdoutLoggingT ($(logInfo) "loading presentation library")
+  lib_res <- readLibFile fn
+  case lib_res of
+    Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
+    Partial _ -> fail "partial Parse fail"
+    Done _ res -> 
+        do --runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
+           return res
+    where readLibFile :: FilePath -> IO (Result Library)
+          readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
 
 
-getPresLibIdHtmlR :: Handler Html
-getPresLibIdHtmlR = do
-  lid <- fmap (lib_id . preslib) getYesod
+type PreslibHandler t = (Yesod master)=> HandlerT PreslibSub (HandlerT master IO) t
+
+instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
+    yesodSubDispatch = $(mkYesodSubDispatch resourcesPreslibSub)
+
+
+
+getPresLibIdHtmlR :: PreslibHandler Html
+getPresLibIdHtmlR = undefined
+
+getPresLibColsHtmlR :: String -> PreslibHandler Html
+getPresLibColsHtmlR = undefined
+
+getPresLibColsListHtmlR :: PreslibHandler Html
+getPresLibColsListHtmlR = undefined
+
+getPresLibColsCssR :: String -> PreslibHandler TypedContent
+getPresLibColsCssR c = undefined
+
+{-
+getPresLibIdHtmlR :: PreslibHandler Html
+getPresLibIdHtmlR = lift $ do
+  lid <- undefined -- fmap (lib_id . preslib) getYesod
   i18n <- getMessageRender
   let id_fields =
           [ (i18n MsgPreslibEXPP, lbid_expp lid) 
@@ -31,7 +90,7 @@ getPresLibIdHtmlR = do
           , (i18n MsgPreslibOCDT, showText $ lbid_ocdt lid) 
           , (i18n MsgPreslibCOMT, lbid_comt lid) 
           ]
-  setModifiedCompileTime
+ -- setModifiedCompileTime
   defaultLayout $ do
     setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
@@ -41,9 +100,9 @@ getPresLibIdHtmlR = do
                             <tr><td>#{k}</td><td>#{v}</td
             |]
 
-getPresLibColsHtmlR :: String -> Handler Html
-getPresLibColsHtmlR c = do
-  plib <- fmap preslib getYesod
+getPresLibColsHtmlR :: String -> PreslibHandler Html
+getPresLibColsHtmlR c = lift $ do
+  plib <- undefined --fmap preslib getYesod
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
     Just cols -> 
@@ -66,9 +125,9 @@ getPresLibColsHtmlR c = do
                        |]
       
 
-getPresLibColsListHtmlR :: Handler Html
-getPresLibColsListHtmlR = do
-  cols <- fmap (lib_cols . preslib) getYesod
+getPresLibColsListHtmlR :: PreslibHandler Html
+getPresLibColsListHtmlR = lift $ do
+  cols <- undefined --fmap (lib_cols . preslib) getYesod
   let ks = map cols_ctus cols
   setModifiedCompileTime
   defaultLayout $ do
@@ -79,9 +138,9 @@ getPresLibColsListHtmlR = do
                   <li><a href=@{PresLibColsHtmlR $ Text.unpack k}>#{k}</a></li>
      |]
 
-getPresLibColsCssR :: String -> Handler TypedContent
-getPresLibColsCssR c = do
-  plib <- fmap preslib getYesod
+getPresLibColsCssR :: String -> PreslibHandler TypedContent
+getPresLibColsCssR c = lift $ do
+  plib <- undefined -- fmap preslib getYesod
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
     Just cols -> do
@@ -101,12 +160,13 @@ showText :: forall a. Show a => a -> Text
 showText = Text.pack . show
 
 setModifiedCompileTime :: forall (m :: * -> *).
-                                (MonadHandler m, HandlerSite m ~ App) =>
+                                (MonadHandler m, HandlerSite m ~ PreslibSub) =>
                                 m ()
 setModifiedCompileTime = do
-  ct <- fmap (lbid_compileTime . lib_id . preslib) getYesod  
+  ct <- undefined -- fmap (lbid_compileTime . lib_id . preslib) getYesod  
   addHeader "Last-Modified" $ httpDate ct
 
 httpDate :: FormatTime t => t -> Text
 httpDate = Text.pack . formatTime defaultTimeLocale "%a, %e %b %Y %T GMT"
 
+-}
