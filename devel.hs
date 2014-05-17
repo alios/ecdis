@@ -1,7 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 import "ecdis" Application (getApplicationDev)
 import Network.Wai.Handler.Warp
-    (runSettings, defaultSettings, settingsPort)
+    (runSettings, defaultSettings, setPort)
 import Control.Concurrent (forkIO)
 import System.Directory (doesFileExist, removeFile)
 import System.Exit (exitSuccess)
@@ -11,10 +11,10 @@ main :: IO ()
 main = do
     putStrLn "Starting devel application"
     (port, app) <- getApplicationDev
-    forkIO $ runSettings defaultSettings
-        { settingsPort = port
-        } app
+    forkIO $ runDevApp port app
     loop
+
+runDevApp p = runSettings $ setPort p $ defaultSettings
 
 loop :: IO ()
 loop = do
