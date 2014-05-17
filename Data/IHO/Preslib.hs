@@ -61,23 +61,17 @@ instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesPreslibSub)
 
 
-
-getPresLibIdHtmlR :: PreslibHandler Html
-getPresLibIdHtmlR = undefined
-
-getPresLibColsHtmlR :: String -> PreslibHandler Html
-getPresLibColsHtmlR = undefined
-
-getPresLibColsListHtmlR :: PreslibHandler Html
-getPresLibColsListHtmlR = undefined
-
-getPresLibColsCssR :: String -> PreslibHandler TypedContent
-getPresLibColsCssR c = undefined
-
+--
+-- Handlers
+--
 {-
 getPresLibIdHtmlR :: PreslibHandler Html
-getPresLibIdHtmlR = lift $ do
-  lid <- undefined -- fmap (lib_id . preslib) getYesod
+getPresLibIdHtmlR = undefined
+-}
+
+getPresLibIdHtmlR :: PreslibHandler Html
+getPresLibIdHtmlR = do
+  lid <- fmap (lib_id . preslib_lib) getYesod
   i18n <- getMessageRender
   let id_fields =
           [ (i18n MsgPreslibEXPP, lbid_expp lid) 
@@ -90,19 +84,20 @@ getPresLibIdHtmlR = lift $ do
           , (i18n MsgPreslibOCDT, showText $ lbid_ocdt lid) 
           , (i18n MsgPreslibCOMT, lbid_comt lid) 
           ]
- -- setModifiedCompileTime
-  defaultLayout $ do
+  setModifiedCompileTime
+  defaultLayoutSub $ do
     setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
      <h1>_{MsgPreslibId}
      <table style="border-width:2px; border-style: solid;">
                 $forall (k, v) <- id_fields
                             <tr><td>#{k}</td><td>#{v}</td
-            |]
+     |]
+
 
 getPresLibColsHtmlR :: String -> PreslibHandler Html
-getPresLibColsHtmlR c = lift $ do
-  plib <- undefined --fmap preslib getYesod
+getPresLibColsHtmlR c = do
+  plib <- fmap (preslib_lib) getYesod
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
     Just cols -> 
@@ -110,7 +105,7 @@ getPresLibColsHtmlR c = lift $ do
             es = cols_entries cols
         in do
           setModifiedCompileTime
-          defaultLayout $ do                      
+          defaultLayoutSub $ do                      
                       addStylesheet $ PresLibColsCssR c
                       i18n <- getMessageRender
                       setTitle $ toHtml $ concat [Text.unpack $ i18n MsgColorDefinition, c]
@@ -123,14 +118,14 @@ getPresLibColsHtmlR c = lift $ do
                                        <td .#{colour}_bg style="width: 80px">&nbsp;
                                        <td .#{colour}>#{snd $ fromJust $ Map.lookup colour es}
                        |]
-      
+
 
 getPresLibColsListHtmlR :: PreslibHandler Html
-getPresLibColsListHtmlR = lift $ do
-  cols <- undefined --fmap (lib_cols . preslib) getYesod
+getPresLibColsListHtmlR = do
+  cols <- fmap (lib_cols . preslib_lib) getYesod
   let ks = map cols_ctus cols
   setModifiedCompileTime
-  defaultLayout $ do
+  defaultLayoutSub $ do
     setTitle "COLS"
     [whamlet| <h1>_{MsgColorDefinition}</h1>
               <ul>
@@ -139,34 +134,32 @@ getPresLibColsListHtmlR = lift $ do
      |]
 
 getPresLibColsCssR :: String -> PreslibHandler TypedContent
-getPresLibColsCssR c = lift $ do
-  plib <- undefined -- fmap preslib getYesod
+getPresLibColsCssR c = do
+  plib <- fmap preslib_lib $ getYesod
+  setModifiedCompileTime
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
     Just cols -> do
-      setModifiedCompileTime
       respond "text/css" $ cssColourMap . cols_entries $ cols
+
 
 --
 -- Helpers
 --
+httpDate :: FormatTime t => t -> Text
+httpDate = Text.pack . formatTime defaultTimeLocale "%a, %e %b %Y %T GMT"
+
+setModifiedCompileTime :: PreslibHandler ()
+setModifiedCompileTime = do
+  ct <- fmap (lbid_compileTime . lib_id . preslib_lib) getYesod  
+  addHeader "Last-Modified" $ httpDate ct
 
 findCOLS :: Library -> Text -> Maybe (Record ColourTable)
 findCOLS lib tn =
     let cols = lib_cols lib
     in find (\c -> cols_ctus c == tn) cols
-                    
+
 showText :: forall a. Show a => a -> Text
 showText = Text.pack . show
 
-setModifiedCompileTime :: forall (m :: * -> *).
-                                (MonadHandler m, HandlerSite m ~ PreslibSub) =>
-                                m ()
-setModifiedCompileTime = do
-  ct <- undefined -- fmap (lbid_compileTime . lib_id . preslib) getYesod  
-  addHeader "Last-Modified" $ httpDate ct
 
-httpDate :: FormatTime t => t -> Text
-httpDate = Text.pack . formatTime defaultTimeLocale "%a, %e %b %Y %T GMT"
-
--}
