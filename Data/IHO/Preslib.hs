@@ -1,13 +1,14 @@
-{-# LANGUAGE QuasiQuotes     #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE KindSignatures     #-}
 {-# LANGUAGE TypeFamilies     #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE QuasiQuotes     #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.IHO.Preslib 
     ( module Data.IHO.Preslib.Data
@@ -24,15 +25,11 @@ import Data.DAI.Types
 import Data.DAI.CSS
 import Data.List (find)
 import Data.Maybe (fromJust)
-import Data.Time.Format
-import System.Locale
 import qualified Data.Map as Map
 import qualified Data.Text.IO as T
 import Data.Attoparsec.Text
-import Data.DAI.Types
 import Data.Text (Text)
-
---    plib <- loadPreslib "config/PresLib_e4.0.0.dai"
+import Control.Monad.Logger 
 
 mkPreslibSub :: FilePath -> IO PreslibSub
 mkPreslibSub fp = do
@@ -43,13 +40,13 @@ mkPreslibSub fp = do
 
 loadPreslib :: FilePath -> IO Library
 loadPreslib fn = do
---  runStdoutLoggingT ($(logInfo) "loading presentation library")
+  runStdoutLoggingT ($(logInfo) "loading presentation library")
   lib_res <- readLibFile fn
   case lib_res of
     Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
     Partial _ -> fail "partial Parse fail"
     Done _ res -> 
-        do --runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
+        do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
            return res
     where readLibFile :: FilePath -> IO (Result Library)
           readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
@@ -64,10 +61,6 @@ instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
 --
 -- Handlers
 --
-{-
-getPresLibIdHtmlR :: PreslibHandler Html
-getPresLibIdHtmlR = undefined
--}
 
 getPresLibIdHtmlR :: PreslibHandler Html
 getPresLibIdHtmlR = do
@@ -146,13 +139,10 @@ getPresLibColsCssR c = do
 --
 -- Helpers
 --
-httpDate :: FormatTime t => t -> Text
-httpDate = Text.pack . formatTime defaultTimeLocale "%a, %e %b %Y %T GMT"
-
 setModifiedCompileTime :: PreslibHandler ()
 setModifiedCompileTime = do
   ct <- fmap (lbid_compileTime . lib_id . preslib_lib) getYesod  
-  addHeader "Last-Modified" $ httpDate ct
+  addHeader "Last-Modified" $ formatRFC1123 ct
 
 findCOLS :: Library -> Text -> Maybe (Record ColourTable)
 findCOLS lib tn =

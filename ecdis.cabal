@@ -73,8 +73,6 @@ library
                  , attoparsec			 >= 0.11
                  , iho-presentation
                  , containers
-                 , time
-                 , old-locale
 
 executable         ecdis
     if flag(library-only)
