@@ -1,5 +1,5 @@
 name:              ecdis
-version:           0.1.0
+version:           0.1.1
 cabal-version:     >= 1.8
 build-type:        Simple
 
@@ -76,7 +76,7 @@ library
                  , blaze-builder                 >= 0.3
                  , time                          >= 1.4
                  , http-types                    >= 0.8
-                 , old-locale
+                 , old-locale                 
 
 
 executable         ecdis

@@ -22,6 +22,7 @@ mkYesodSubData "PreslibSub" [parseRoutes|
   /COLS			  PresLibColsListHtmlR GET
   /COLS/#String           PresLibColsHtmlR GET
   /COLS/#String/style.css PresLibColsCssR GET
+  /LUPT                   PresLibLuptListHtmlR GET
 |]
 
 

@@ -70,6 +70,7 @@ getPresLibHtmlR :: PreslibHandler Html
 getPresLibHtmlR = do
   lib <- fmap preslib_lib getYesod
   i18n <- getMessageRender
+  setModifiedCompileTime
   defaultLayoutSub $ do
     setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
@@ -81,8 +82,10 @@ getPresLibHtmlR = do
      <h2>_{MsgPreslibCOLS} (#{length $ lib_cols lib} _{MsgPreslibEntries}) 
      <a href="@{PresLibColsListHtmlR}">
         _{MsgPreslibClickMore}
-
      <h2>_{MsgPreslibLUPT} (#{length $ lib_lupt lib} _{MsgPreslibEntries})
+     <a href="@{PresLibLuptListHtmlR}">
+        _{MsgPreslibClickMore}
+
      <h2>_{MsgPreslibLNST} (#{length $ lib_lnst lib} _{MsgPreslibEntries})
      <h2>_{MsgPreslibSYMB} (#{length $ lib_symb lib} _{MsgPreslibEntries})
      <h2>_{MsgPreslibPATT} (#{length $ lib_patt lib} _{MsgPreslibEntries})
@@ -93,6 +96,7 @@ getPresLibIdHtmlR :: PreslibHandler Html
 getPresLibIdHtmlR = do
   lid <- fmap (lib_lbid . preslib_lib) getYesod
   i18n <- getMessageRender
+  setModifiedCompileTime
   let id_fields =
           [ (i18n MsgPreslibEXPP, lbid_expp lid) 
           , (i18n MsgPreslibPTYP, lbid_ptyp lid)
@@ -114,9 +118,51 @@ getPresLibIdHtmlR = do
      |]
 
 
+
+getPresLibLuptListHtmlR :: PreslibHandler Html
+getPresLibLuptListHtmlR = do 
+  lib <- fmap preslib_lib getYesod
+  i18n <- getMessageRender
+  setModifiedCompileTime
+  let lupt = lib_lupt lib
+  defaultLayoutSub $ do
+    setTitle . toHtml . i18n $ MsgPreslibLUPT
+    [whamlet|
+     <h2>_{MsgPreslibLUPT} 
+     <p>
+       (#{length lupt} _{MsgPreslibEntries})
+     <table border="1" style="border-width:2px; border-style: solid;">
+       <tr>
+         <th>OBCL
+         <th>FTYP
+         <th>ATTC
+         <th>DPRI
+         <th>RPRI
+         <th>TNAM
+         <th>DISC
+         <th>LUCM
+       $forall r <- lupt
+         <tr>
+           <td>#{lupt_obcl r}
+           <td>#{lupt_ftyp r}
+           <td>
+             <ul>
+               $forall (k,v) <- lupt_attc r
+                 <li>
+                   <b>#{k}: 
+                   <span>#{v}
+           <td>#{toInteger $ lupt_dpri r}                        
+           <td>#{lupt_rpri r}                        
+           <td>#{lupt_tnam r}
+           <td>#{lupt_disc r}
+           <td>#{lupt_lucm r}
+            |]
+
+
 getPresLibColsHtmlR :: String -> PreslibHandler Html
 getPresLibColsHtmlR c = do
   plib <- fmap (preslib_lib) getYesod
+  setModifiedCompileTime
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
     Just cols -> 
@@ -149,8 +195,12 @@ getPresLibColsListHtmlR = do
     [whamlet| <h1>_{MsgColorDefinition}</h1>
               <ul>
               $forall k <- ks
-                  <li><a href=@{PresLibColsHtmlR $ Text.unpack k}>#{k}</a></li>
+                  <li><a href=@{PresLibColsHtmlR $ Text.unpack k}>#{k}</a></li>              
      |]
+
+
+
+
 
 
 getPresLibColsCssR :: String -> PreslibHandler TypedContent
