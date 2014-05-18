@@ -74,6 +74,10 @@ library
                  , iho-presentation              >= 0.3
                  , containers
                  , blaze-builder                 >= 0.3
+                 , time                          >= 1.4
+                 , http-types                    >= 0.8
+                 , old-locale
+
 
 executable         ecdis
     if flag(library-only)

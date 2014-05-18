@@ -17,6 +17,7 @@ data PreslibSub = PreslibSub {
 } 
 
 mkYesodSubData "PreslibSub" [parseRoutes|
+  /                       PresLibHtmlR GET
   /LBID			  PresLibIdHtmlR GET
   /COLS			  PresLibColsListHtmlR GET
   /COLS/#String           PresLibColsHtmlR GET

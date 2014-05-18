@@ -29,10 +29,14 @@ import qualified Data.Text.IO as T
 import Data.Attoparsec.Text
 import Data.Text (Text)
 import Control.Monad.Logger 
-
+import Network.HTTP.Types.Status
 import qualified Blaze.ByteString.Builder.Char.Utf8 as B
 import Blaze.ByteString.Builder.Internal.Types (Builder)
-
+import Data.Time.Format as Time
+import Data.Time.Clock
+import System.Locale
+import qualified Data.Text.Encoding as E
+import qualified Data.Text as T
 mkPreslibSub :: FilePath -> IO PreslibSub
 mkPreslibSub fp = do
   lib <- loadPreslib fp
@@ -45,13 +49,12 @@ loadPreslib fn = do
   runStdoutLoggingT ($(logInfo) "loading presentation library")
   lib_res <- readLibFile fn
   case lib_res of
-    Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
-    Partial _ -> fail "partial Parse fail"
-    Done _ res -> 
+    Left err -> fail err
+    Right res ->
         do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_lbid $ res))
            return res
-    where readLibFile :: FilePath -> IO (Result Library)
-          readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
+    where readLibFile :: FilePath -> IO (Either String Library)
+          readLibFile fp = do fmap (parseOnly parseLibrary) $ T.readFile fp
 
 
 type PreslibHandler t = (Yesod master)=> HandlerT PreslibSub (HandlerT master IO) t
@@ -63,6 +66,17 @@ instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
 --
 -- Handlers
 --
+getPresLibHtmlR :: PreslibHandler Html
+getPresLibHtmlR = do
+  lib <- fmap preslib_lib getYesod
+  i18n <- getMessageRender
+  defaultLayoutSub $ do
+    setTitle . toHtml . i18n $ MsgPreslibId
+    [whamlet|
+     <h1>_{MsgPreslibId}
+     
+     |]
+
 
 getPresLibIdHtmlR :: PreslibHandler Html 
 getPresLibIdHtmlR = do
@@ -151,6 +165,15 @@ instance ToTypedContent (Record ColourTable) where
 setModifiedCompileTime :: PreslibHandler ()
 setModifiedCompileTime = do
   ct <- fmap (lbid_compileTime . lib_lbid . preslib_lib) getYesod  
+  hdr <-  lookupHeader "If-Modified-Since"
+  ($(logInfo) "loading presentation library")  
+  case hdr of
+    Just hv -> 
+        let t2 = parseUTCTime . E.decodeUtf8 $ hv 
+        in if (ct <= t2) 
+           then sendResponseStatus notModified304 ()
+           else return ()
+    Nothing -> do return ()
   neverExpires
   addHeader "Last-Modified" $ formatRFC1123 ct
 
@@ -161,5 +184,11 @@ findCOLS lib tn =
 
 showText :: forall a. Show a => a -> Text
 showText = Text.pack . show
+
+parseUTCTime :: Text -> UTCTime
+parseUTCTime i =
+    case (Time.parseTime defaultTimeLocale "%a, %d %b %Y %T %Z" $ T.unpack i) of
+      Nothing -> error $ "unable to parse date: " ++ T.unpack i
+      Just d -> d
 
 
