@@ -48,7 +48,7 @@ loadPreslib fn = do
     Fail _ ss s -> fail $ "parseFail" ++ show ss ++ s
     Partial _ -> fail "partial Parse fail"
     Done _ res -> 
-        do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_id $ res))
+        do runStdoutLoggingT ($(logInfo) (lbid_comt . lib_lbid $ res))
            return res
     where readLibFile :: FilePath -> IO (Result Library)
           readLibFile fp = do fmap (parse parseLibrary) $ T.readFile fp
@@ -66,7 +66,7 @@ instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
 
 getPresLibIdHtmlR :: PreslibHandler Html 
 getPresLibIdHtmlR = do
-  lid <- fmap (lib_id . preslib_lib) getYesod
+  lid <- fmap (lib_lbid . preslib_lib) getYesod
   i18n <- getMessageRender
   let id_fields =
           [ (i18n MsgPreslibEXPP, lbid_expp lid) 
@@ -150,7 +150,7 @@ instance ToTypedContent (Record ColourTable) where
 --
 setModifiedCompileTime :: PreslibHandler ()
 setModifiedCompileTime = do
-  ct <- fmap (lbid_compileTime . lib_id . preslib_lib) getYesod  
+  ct <- fmap (lbid_compileTime . lib_lbid . preslib_lib) getYesod  
   neverExpires
   addHeader "Last-Modified" $ formatRFC1123 ct
 

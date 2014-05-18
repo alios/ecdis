@@ -71,7 +71,7 @@ library
                  , fast-logger                   >= 2.0
                  , wai-logger                    >= 2.0
                  , attoparsec			 >= 0.11
-                 , iho-presentation              >= 0.2
+                 , iho-presentation              >= 0.3
                  , containers
                  , blaze-builder                 >= 0.3
 
