@@ -74,7 +74,18 @@ getPresLibHtmlR = do
     setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
      <h1>_{MsgPreslibId}
-     
+     #{lbid_comt $ lib_lbid lib}
+     <br />
+     <a href="@{PresLibIdHtmlR}">
+        _{MsgPreslibClickMore}
+     <h2>_{MsgPreslibCOLS} (#{length $ lib_cols lib} _{MsgPreslibEntries}) 
+     <a href="@{PresLibColsListHtmlR}">
+        _{MsgPreslibClickMore}
+
+     <h2>_{MsgPreslibLUPT} (#{length $ lib_lupt lib} _{MsgPreslibEntries})
+     <h2>_{MsgPreslibLNST} (#{length $ lib_lnst lib} _{MsgPreslibEntries})
+     <h2>_{MsgPreslibSYMB} (#{length $ lib_symb lib} _{MsgPreslibEntries})
+     <h2>_{MsgPreslibPATT} (#{length $ lib_patt lib} _{MsgPreslibEntries})
      |]
 
 
