@@ -141,6 +141,7 @@ getPresLibLuptListHtmlR = do
          <th>TNAM
          <th>DISC
          <th>LUCM
+         <th>INST
        $forall r <- lupt
          <tr>
            <td>#{lupt_obcl r}
@@ -156,6 +157,10 @@ getPresLibLuptListHtmlR = do
            <td>#{lupt_tnam r}
            <td>#{lupt_disc r}
            <td>#{lupt_lucm r}
+           <td>
+             <ol>
+               $forall i <- lupt_inst r
+                 <li>#{i}                   
             |]
 
 
