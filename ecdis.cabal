@@ -20,8 +20,8 @@ library
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home
-                     Data.IHO.Preslib
-                     Data.IHO.Preslib.Data
+                     Data.IHO.S52.YesodHandler
+                     Data.IHO.S52.YesodAppData
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
@@ -71,8 +71,9 @@ library
                  , fast-logger                   >= 2.0
                  , wai-logger                    >= 2.0
                  , attoparsec			 >= 0.11
-                 , iho-presentation
+                 , iho-presentation              >= 0.2
                  , containers
+                 , blaze-builder                 >= 0.3
 
 executable         ecdis
     if flag(library-only)

@@ -24,7 +24,7 @@ import Model
 import Text.Jasmine (minifym)
 import Text.Hamlet (hamletFile)
 import Yesod.Core.Types (Logger)
-import Data.IHO.Preslib
+import Data.IHO.S52.YesodHandler
 
 
 -- | The site argument for your application. This can be a good place to

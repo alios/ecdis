@@ -27,7 +27,7 @@ import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 import qualified Network.Wai.Middleware.Gzip as Gzip
-import Data.IHO.Preslib
+import Data.IHO.S52.YesodHandler
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!

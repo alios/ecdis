@@ -10,19 +10,18 @@
 {-# LANGUAGE QuasiQuotes     #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Data.IHO.Preslib 
-    ( module Data.IHO.Preslib.Data
+module Data.IHO.S52.YesodHandler
+    ( module Data.IHO.S52.YesodAppData
     , mkPreslibSub
     ) where
 
 import Prelude
 
-import Data.IHO.Preslib.Data
+import Data.IHO.S52.YesodAppData
 import Yesod
-
 import qualified Data.Text as Text
-import Data.DAI.Types
-import Data.DAI.CSS
+import Data.IHO.S52.Types
+import Data.IHO.S52.CSS
 import Data.List (find)
 import Data.Maybe (fromJust)
 import qualified Data.Map as Map
@@ -30,6 +29,9 @@ import qualified Data.Text.IO as T
 import Data.Attoparsec.Text
 import Data.Text (Text)
 import Control.Monad.Logger 
+
+import qualified Blaze.ByteString.Builder.Char.Utf8 as B
+import Blaze.ByteString.Builder.Internal.Types (Builder)
 
 mkPreslibSub :: FilePath -> IO PreslibSub
 mkPreslibSub fp = do
@@ -62,7 +64,7 @@ instance Yesod master => YesodSubDispatch PreslibSub (HandlerT master IO) where
 -- Handlers
 --
 
-getPresLibIdHtmlR :: PreslibHandler Html
+getPresLibIdHtmlR :: PreslibHandler Html 
 getPresLibIdHtmlR = do
   lid <- fmap (lib_id . preslib_lib) getYesod
   i18n <- getMessageRender
@@ -77,7 +79,6 @@ getPresLibIdHtmlR = do
           , (i18n MsgPreslibOCDT, showText $ lbid_ocdt lid) 
           , (i18n MsgPreslibCOMT, lbid_comt lid) 
           ]
-  setModifiedCompileTime
   defaultLayoutSub $ do
     setTitle . toHtml . i18n $ MsgPreslibId
     [whamlet|
@@ -126,22 +127,31 @@ getPresLibColsListHtmlR = do
                   <li><a href=@{PresLibColsHtmlR $ Text.unpack k}>#{k}</a></li>
      |]
 
+
 getPresLibColsCssR :: String -> PreslibHandler TypedContent
 getPresLibColsCssR c = do
   plib <- fmap preslib_lib $ getYesod
   setModifiedCompileTime
   case (findCOLS plib $ Text.pack c) of
     Nothing -> notFound
-    Just cols -> do
-      respond "text/css" $ cssColourMap . cols_entries $ cols
+    Just cols -> return $ toTypedContent cols
 
 
+css_builder :: Record ColourTable -> Builder
+css_builder cols = B.fromLazyText $ cssColourMap . cols_entries $ cols
+
+instance ToContent (Record ColourTable) where
+    toContent cols = ContentBuilder (css_builder cols) Nothing
+
+instance ToTypedContent (Record ColourTable) where
+    toTypedContent cols = TypedContent typeCss $ toContent cols
 --
 -- Helpers
 --
 setModifiedCompileTime :: PreslibHandler ()
 setModifiedCompileTime = do
   ct <- fmap (lbid_compileTime . lib_id . preslib_lib) getYesod  
+  neverExpires
   addHeader "Last-Modified" $ formatRFC1123 ct
 
 findCOLS :: Library -> Text -> Maybe (Record ColourTable)

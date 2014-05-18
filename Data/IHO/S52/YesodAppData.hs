@@ -6,10 +6,10 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 
-module Data.IHO.Preslib.Data where
+module Data.IHO.S52.YesodAppData where
 
 import Yesod
-import Data.DAI.Types
+import Data.IHO.S52.Types
 import Prelude
 
 data PreslibSub = PreslibSub {
