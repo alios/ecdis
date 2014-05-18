@@ -145,7 +145,7 @@ getPresLibLuptListHtmlR = do
        $forall r <- lupt
          <tr>
            <td>#{lupt_obcl r}
-           <td>#{lupt_ftyp r}
+           <td>#{show $ lupt_ftyp r}
            <td>
              <ul>
                $forall (k,v) <- lupt_attc r
@@ -153,14 +153,15 @@ getPresLibLuptListHtmlR = do
                    <b>#{k}: 
                    <span>#{v}
            <td>#{toInteger $ lupt_dpri r}                        
-           <td>#{lupt_rpri r}                        
-           <td>#{lupt_tnam r}
+           <td>#{show $ lupt_rpri r}                        
+           <td>#{show $ lupt_tnam r}
            <td>#{lupt_disc r}
            <td>#{lupt_lucm r}
            <td>
              <ol>
                $forall i <- lupt_inst r
-                 <li>#{i}                   
+                 <li>
+                  #{i}                   
             |]
 
 
